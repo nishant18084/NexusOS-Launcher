@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Truecaller Verification</title>
+</head>
+<body>
+  <h2>Login with Truecaller</h2>
+  <button id="tc-login-btn">Verify with Truecaller</button>
+
+  <script>
+    document.getElementById("tc-login-btn").addEventListener("click", () => {
+      // 1. Unique request ID (nonce) generate karein
+      const requestId = "req_" + Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem("tc_request_id", requestId);
+
+      // 2. Apni details yahan fill karein
+      const partnerKey = "YOUR_APP_KEY"; // Truecaller dashboard se mili key
+      const partnerName = "YourAppName"; 
+      const callbackUrl = encodeURIComponent("https://yourusername.github.io/repo-name/callback.html");
+
+      // 3. Truecaller deep-link URL (Mobile web browsers ke liye)
+      const truecallerDeepLink = `truecallersdk://truesdk/web_verify?type=btmsheet&requestNonce=${requestId}&partnerKey=${partnerKey}&partnerName=${partnerName}&lang=en&title=login&skipOption=manual&callback=${callbackUrl}`;
+
+      // 4. Redirect karein Truecaller app par
+      window.location.href = truecallerDeepLink;
+
+      // Fallback agar user ke paas Truecaller app na ho
+      setTimeout(() => {
+        alert("Agar Truecaller app open nahi hui, toh please app install karein ya manual flow use karein.");
+      }, 2500);
+    });
+  </script>
+</body>
+</html>
