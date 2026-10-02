@@ -3,34 +3,115 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Truecaller Verification</title>
+  <title>Truecaller Login</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      margin: 0;
+      background-color: #f7f9fa;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-width: 360px;
+      width: 90%;
+      text-align: center;
+    }
+    button {
+      background-color: #0087ff;
+      color: #ffffff;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+    }
+    #profile {
+      margin-top: 20px;
+      text-align: left;
+      background: #eef5ff;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      word-break: break-all;
+    }
+  </style>
 </head>
 <body>
-  <h2>Login with Truecaller</h2>
-  <button id="tc-login-btn">Verify with Truecaller</button>
+
+  <div class="card">
+    <h2>Login with Truecaller</h2>
+    <p style="color: #666; font-size: 14px;">Apna number verify karne ke liye neeche click karein</p>
+    
+    <button id="tc-login-btn">Verify with Truecaller</button>
+
+    <div id="profile">
+      <h3>User Details:</h3>
+      <p id="user-info">Loading...</p>
+    </div>
+  </div>
 
   <script>
+    const PARTNER_KEY = "p3LJd7f69eab5c4294942a21df9445fea52b3";
+    const PARTNER_NAME = "Ch";
+    const CALLBACK_URL = "https://nishant18084.github.io/Vo/";
+
+    // 1. Check karein ki Truecaller se wapas redirect hokar aaye hain ya nahi
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestId = urlParams.get("requestId");
+    const endpoint = urlParams.get("endpoint");
+    const accessToken = urlParams.get("accessToken");
+
+    if (requestId && accessToken && endpoint) {
+      document.getElementById("profile").style.display = "block";
+      document.getElementById("user-info").innerText = "Data fetch ho raha hai...";
+
+      // Truecaller API se details fetch karein
+      fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + accessToken,
+          "Cache-Control": "no-cache"
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("user-info").innerHTML = `
+          <b>Name:</b> ${data.name ? (data.name.first + ' ' + (data.name.last || '')) : 'N/A'}<br>
+          <b>Phone:</b> ${data.phoneNumber || (data.phoneNumbers ? data.phoneNumbers[0] : 'N/A')}<br>
+          <b>Country:</b> ${data.countryCode || 'N/A'}
+        `;
+      })
+      .catch(err => {
+        document.getElementById("user-info").innerText = "Profile fetch failed (CORS/Token Expired). Token: " + accessToken;
+      });
+    }
+
+    // 2. Button dabane par Truecaller app trigger karein
     document.getElementById("tc-login-btn").addEventListener("click", () => {
-      // 1. Unique request ID (nonce) generate karein
-      const requestId = "req_" + Math.random().toString(36).substring(2, 15);
-      sessionStorage.setItem("tc_request_id", requestId);
+      const currentNonce = "req_" + Math.random().toString(36).substring(2, 10);
+      const encodedCallback = encodeURIComponent(CALLBACK_URL);
 
-      // 2. Apni details yahan fill karein
-      const partnerKey = "YOUR_APP_KEY"; // Truecaller dashboard se mili key
-      const partnerName = "YourAppName"; 
-      const callbackUrl = encodeURIComponent("https://yourusername.github.io/repo-name/callback.html");
+      const deepLink = `truecallersdk://truesdk/web_verify?type=btmsheet&requestNonce=${currentNonce}&partnerKey=${PARTNER_KEY}&partnerName=${PARTNER_NAME}&lang=en&title=login&skipOption=manual&callback=${encodedCallback}`;
 
-      // 3. Truecaller deep-link URL (Mobile web browsers ke liye)
-      const truecallerDeepLink = `truecallersdk://truesdk/web_verify?type=btmsheet&requestNonce=${requestId}&partnerKey=${partnerKey}&partnerName=${partnerName}&lang=en&title=login&skipOption=manual&callback=${callbackUrl}`;
+      window.location.href = deepLink;
 
-      // 4. Redirect karein Truecaller app par
-      window.location.href = truecallerDeepLink;
-
-      // Fallback agar user ke paas Truecaller app na ho
       setTimeout(() => {
-        alert("Agar Truecaller app open nahi hui, toh please app install karein ya manual flow use karein.");
+        alert("Agar Truecaller nahi khula toh check karein ki phone me Truecaller app installed aur logged in hai.");
       }, 2500);
     });
   </script>
+
 </body>
 </html>
