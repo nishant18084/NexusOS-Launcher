@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fresh - Car Racing</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #0b0f14;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: auto;
+      padding: 15px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .coins {
+      background: #18212b;
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .panel {
+      background: #121821;
+      border: 1px solid #293541;
+      border-radius: 18px;
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 11px;
+      padding: 11px 15px;
+      background: #25303c;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #344252;
+    }
+
+    .tabs button.active,
+    .primary {
+      background: #f4c542;
+      color: #111;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+      background: #617656;
+    }
+
+    .race-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .race-controls button {
+      min-height: 55px;
+      font-size: 14px;
+    }
+
+    .race-controls .go {
+      background: #f4c542;
+      color: #111;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .notice {
+      text-align: center;
+      padding: 9px;
+      color: #b9c3ce;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: #1a222d;
+      padding: 14px;
+      border-radius: 14px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .car-preview {
+      height: 120px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #273442, #10151b);
+      display: grid;
+      place-items: center;
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+
+    .muted {
+      color: #9ca8b5;
+      font-size: 13px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0;
+    }
+
+    .bar {
+      height: 8px;
+      background: #303a45;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: #f4c542;
+    }
+
+    @media (max-width: 600px) {
+      .race-controls {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <h1>🏁 FRESH</h1>
+
+    <div class="coins">
+      🪙 <span id="coins">500</span>
+    </div>
+  </header>
+
+  <!-- MENU -->
+
+  <div class="panel tabs">
+    <button class="active" data-tab="race">
+      Race
+    </button>
+
+    <button data-tab="cars">
+      Cars
+    </button>
+
+    <button data-tab="levels">
+      Levels
+    </button>
+
+    <button data-tab="upgrade">
+      Upgrades
+    </button>
+  </div>
+
+  <!-- RACE -->
+
+  <section id="race" class="screen active panel">
+
+    <canvas
+      id="game"
+      width="960"
+      height="540">
+    </canvas>
+
+    <div class="notice" id="msg">
+      Choose a car and level,
+      then start the race.
+    </div>
+
+    <div class="race-controls">
+
+      <button id="left">
+        ◀ LEFT
+      </button>
+
+      <button id="gas" class="go">
+        ACCELERATE
+      </button>
+
+      <button id="right">
+        RIGHT ▶
+      </button>
+
+      <button id="brake">
+        BRAKE
+      </button>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        id="start"
+        class="primary">
+        START RACE
+      </button>
+
+      <button id="restart">
+        ↻ RESTART
+      </button>
+
+    </div>
+
+  </section>
+
+  <!-- CARS -->
+
+  <section
+    id="cars"
+    class="screen panel">
+
+    <h2>Choose Your Car</h2>
+
+    <div
+      class="grid"
+      id="carList">
+    </div>
+
+  </section>
+
+  <!-- LEVELS -->
+
+  <section
+    id="levels"
+    class="screen panel">
+
+    <h2>Choose Level</h2>
+
+    <div
+      class="grid"
+      id="levelList">
+    </div>
+
+  </section>
+
+  <!-- UPGRADES -->
+
+  <section
+    id="upgrade"
+    class="screen panel">
+
+    <h2>Upgrades</h2>
+
+    <div
+      class="grid"
+      id="upgradeList">
+    </div>
+
+  </section>
+
+</div>
+
+<script>
+
+const cars = [
+
+  {
+    id: 0,
+    name: "Fresh GT",
+    price: 0,
+    emoji: "🏎️",
+    speed: 7,
+    handling: 7
+  },
+
+  {
+    id: 1,
+    name: "Street R",
+    price: 250,
+    emoji: "🚗",
+    speed: 9,
+    handling: 6
+  },
+
+  {
+    id: 2,
+    name: "Vortex X",
+    price: 600,
+    emoji: "🏎️",
+    speed: 11,
+    handling: 8
+  }
+
+];
+
+
+const levels = [
+
+  {
+    id: 0,
+    name: "City Sprint"
+  },
+
+  {
+    id: 1,
+    name: "Desert Run"
+  },
+
+  {
+    id: 2,
+    name: "Mountain Pass"
+  }
+
+];
+
+
+let state =
+  JSON.parse(
+    localStorage.getItem("freshState")
+  ) || {
+
+    coins: 500,
+
+    car: 0,
+
+    level: 0,
+
+    owned: [0],
+
+    up: {
+      speed: 0,
+      handling: 0
+    }
+
+  };
+
+
+function save() {
+
+  localStorage.setItem(
+    "freshState",
+    JSON.stringify(state)
+  );
+
+  document.getElementById(
+    "coins"
+  ).textContent = state.coins;
+
+}
+
+
+const canvas =
+  document.getElementById("game");
+
+const ctx =
+  canvas.getContext("2d");
+
+
+let keys = {};
+
+let car;
+
+let playing = false;
+
+let distance = 0;
+
+let last = 0;
+
+
+const track = {
+
+  cx: 480,
+
+  cy: 270,
+
+  rx: 300,
+
+  ry: 190,
+
+  width: 115
+
+};
+
+
+function resetCar() {
+
+  car = {
+
+    x: 480,
+
+    y: 465,
+
+    a: -Math.PI / 2,
+
+    v: 0
+
+  };
+
+  distance = 0;
+
+  playing = false;
+
+}
+
+
+function draw() {
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  /* GRASS */
+
+  ctx.fillStyle = "#617656";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  /* ROAD */
+
+  ctx.fillStyle = "#25282d";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    track.cx,
+    track.cy,
+    track.rx + 58,
+    track.ry + 58,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* GRASS INSIDE */
+
+  ctx.fillStyle = "#617656";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    track.cx,
+    track.cy,
+    track.rx - 58,
+    track.ry - 58,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* ROAD LINE */
+
+  ctx.strokeStyle = "#eeeeee";
+
+  ctx.lineWidth = 3;
+
+  ctx.setLineDash([
+    25,
+    24
+  ]);
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    track.cx,
+    track.cy,
+    track.rx,
+    track.ry,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+
+  /* CAR */
+
+  ctx.save();
+
+  ctx.translate(
+    car.x,
+    car.y
+  );
+
+  ctx.rotate(
+    car.a + Math.PI / 2
+  );
+
+
+  const colors = [
+    "#e33b32",
+    "#3498db",
+    "#f1c40f"
+  ];
+
+
+  ctx.fillStyle =
+    colors[state.car];
+
+  ctx.fillRect(
+    -17,
+    -30,
+    34,
+    60
+  );
+
+
+  /* WINDOWS */
+
+  ctx.fillStyle =
+    "#b9c5cf";
+
+  ctx.fillRect(
+    -12,
+    -18,
+    24,
+    16
+  );
+
+
+  /* WHEELS */
+
+  ctx.fillStyle =
+    "#111";
+
+  ctx.fillRect(
+    -19,
+    -18,
+    5,
+    13
+  );
+
+  ctx.fillRect(
+    14,
+    -18,
+    5,
+    13
+  );
+
+  ctx.fillRect(
+    -19,
+    9,
+    5,
+    13
+  );
+
+  ctx.fillRect(
+    14,
+    9,
+    5,
+    13
+  );
+
+
+  ctx.restore();
+
+}
+
+
+function startRace() {
+
+  resetCar();
+
+  playing = true;
+
+  document.getElementById(
+    "msg"
+  ).textContent =
+    "🏁 Race started!";
+
+
+}
+
+
+function update(time) {
+
+  const dt =
+    Math.min(
+      0.035,
+      (time - last) / 1000 || 0
+    );
+
+  last = time;
+
+
+  if (playing) {
+
+    const selected =
+      cars[state.car];
+
+
+    let maxSpeed =
+      selected.speed +
+      state.up.speed * 1.2;
+
+
+    /* ACCELERATION */
+
+    if (keys.g) {
+
+      car.v +=
+        18 * dt;
+
+    } else {
+
+      car.v -=
+        4 * dt;
+
+    }
+
+
+    /* BRAKE */
+
+    if (keys.b) {
+
+      car.v -=
+        25 * dt;
+
+    }
+
+
+    car.v =
+      Math.max(
+        0,
+        Math.min(
+          maxSpeed,
+          car.v
+        )
+      );
+
+
+    /* STEERING */
+
+    const steering =
+      (keys.r ? 1 : 0) -
+      (keys.l ? 1 : 0);
+
+
+    car.a +=
+      steering *
+      (1.9 +
+        state.up.handling * 0.18) *
+      dt *
+      (0.4 +
+        car.v / 9);
+
+
+    /* MOVEMENT */
+
+    car.x +=
+      Math.cos(car.a) *
+      car.v *
+      17 *
+      dt;
+
+    car.y +=
+      Math.sin(car.a) *
+      car.v *
+      17 *
+      dt;
+
+
+    distance +=
+      car.v * dt;
+
+
+    /* OFF ROAD */
+
+    const roadDistance =
+      Math.hypot(
+        (car.x - track.cx) /
+          track.rx,
+
+        (car.y - track.cy) /
+          track.ry
+      );
+
+
+    if (
+      roadDistance > 1.18
+    ) {
+
+      car.v *= 0.90;
+
+      document.getElementById(
+        "msg"
+      ).textContent =
+        "⚠️ Off track!";
+
+    } else {
+
+      document.getElementById(
+        "msg"
+      ).textContent =
+        "🏎️ Racing...";
+
+    }
+
+
+    /* FINISH */
+
+    if (distance > 430) {
+
+      playing = false;
+
+
+      const reward =
+        100 +
+        state.level * 75;
+
+
+      state.coins +=
+        reward;
+
+
+      save();
+
+
+      document.getElementById(
+        "msg"
+      ).textContent =
+        "🏁 Finished! +" +
+        reward +
+        " coins";
+
+
+      render();
+
+    }
+
+  }
+
+
+  draw();
+
+  requestAnimationFrame(
+    update
+  );
+
+}
+
+
+/* BUTTON CONTROLS */
+
+function bindButton(
+  id,
+  key
+) {
+
+  const button =
+    document.getElementById(id);
+
+
+  button.addEventListener(
+    "pointerdown",
+    function(e) {
+
+      e.preventDefault();
+
+      keys[key] = true;
+
+    }
+  );
+
+
+  [
+    "pointerup",
+    "pointercancel",
+    "pointerleave"
+  ].forEach(event => {
+
+    button.addEventListener(
+      event,
+      function(e) {
+
+        e.preventDefault();
+
+        keys[key] = false;
+
+      }
+    );
+
+  });
+
+}
+
+
+bindButton(
+  "left",
+  "l"
+);
+
+bindButton(
+  "right",
+  "r"
+);
+
+bindButton(
+  "gas",
+  "g"
+);
+
+bindButton(
+  "brake",
+  "b"
+);
+
+
+/* KEYBOARD */
+
+document.addEventListener(
+  "keydown",
+  function(e) {
+
+    if (
+      e.key === "ArrowLeft" ||
+      e.key === "a"
+    ) keys.l = true;
+
+
+    if (
+      e.key === "ArrowRight" ||
+      e.key === "d"
+    ) keys.r = true;
+
+
+    if (
+      e.key === "ArrowUp" ||
+      e.key === "w"
+    ) keys.g = true;
+
+
+    if (
+      e.key === "ArrowDown" ||
+      e.key === "s"
+    ) keys.b = true;
+
+  }
+);
+
+
+document.addEventListener(
+  "keyup",
+  function(e) {
+
+    if (
+      e.key === "ArrowLeft" ||
+      e.key === "a"
+    ) keys.l = false;
+
+
+    if (
+      e.key === "ArrowRight" ||
+      e.key === "d"
+    ) keys.r = false;
+
+
+    if (
+      e.key === "ArrowUp" ||
+      e.key === "w"
+    ) keys.g = false;
+
+
+    if (
+      e.key === "ArrowDown" ||
+      e.key === "s"
+    ) keys.b = false;
+
+  }
+);
+
+
+/* START */
+
+document
+  .getElementById("start")
+  .onclick =
+  startRace;
+
+
+/* RESTART */
+
+document
+  .getElementById("restart")
+  .onclick =
+  function() {
+
+    resetCar();
+
+    draw();
+
+    document.getElementById(
+      "msg"
+    ).textContent =
+      "Ready to race.";
+
+  };
+
+
+/* MENU */
+
+document
+  .querySelectorAll(
+    "[data-tab]"
+  )
+  .forEach(button => {
+
+    button.onclick =
+      function() {
+
+        document
+          .querySelectorAll(
+            ".screen"
+          )
+          .forEach(
+            screen =>
+              screen.classList
+                .remove("active")
+          );
+
+
+        document
+          .getElementById(
+            button.dataset.tab
+          )
+          .classList
+          .add("active");
+
+
+        document
+          .querySelectorAll(
+            "[data-tab]"
+          )
+          .forEach(
+            b =>
+              b.classList
+                .remove("active")
+          );
+
+
+        button.classList
+          .add("active");
+
+
+        render();
+
+      };
+
+  });
+
+
+/* RENDER CARS */
+
+function renderCars() {
+
+  const list =
+    document.getElementById(
+      "carList"
+    );
+
+
+  list.innerHTML =
+    cars.map(car => `
+
+      <div class="card">
+
+        <div class="car-preview">
+          ${car.emoji}
+        </div>
+
+        <h3>
+          ${car.name}
+        </h3>
+
+        <div class="muted">
+          Speed: ${car.speed}
+          <br>
+          Handling: ${car.handling}
+        </div>
+
+        <br>
+
+        <button
+          onclick="buyCar(${car.id})">
+
+          ${
+            state.owned.includes(
+              car.id
+            )
+              ? (
+                  state.car === car.id
+                    ? "SELECTED"
+                    : "SELECT"
+                )
+              : car.price +
+                " 🪙 BUY"
+          }
+
+        </button>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* BUY CAR */
+
+window.buyCar =
+  function(id) {
+
+    const car =
+      cars[id];
+
+
+    if (
+      state.owned.includes(id)
+    ) {
+
+      state.car = id;
+
+    }
+
+    else if (
+      state.coins >= car.price
+    ) {
+
+      state.coins -=
+        car.price;
+
+      state.owned.push(id);
+
+      state.car = id;
+
+    }
+
+
+    save();
+
+    render();
+
+  };
+
+
+/* LEVELS */
+
+function renderLevels() {
+
+  const list =
+    document.getElementById(
+      "levelList"
+    );
+
+
+  list.innerHTML =
+    levels.map(level => {
+
+      const unlocked =
+        level.id === 0 ||
+        level.id <= state.level + 1;
+
+
+      return `
+
+        <div class="card">
+
+          <h3>
+            ${level.name}
+          </h3>
+
+          <div class="muted">
+            Level ${level.id + 1}
+          </div>
+
+          <br>
+
+          <button
+            onclick="selectLevel(${level.id})">
+
+            ${
+              unlocked
+                ? "SELECT"
+                : "🔒 LOCKED"
+            }
+
+          </button>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* SELECT LEVEL */
+
+window.selectLevel =
+  function(id) {
+
+    if (
+      id === 0 ||
+      id <= state.level + 1
+    ) {
+
+      state.level = id;
+
+      save();
+
+      render();
+
+    }
+
+  };
+
+
+/* UPGRADES */
+
+function renderUpgrades() {
+
+  const list =
+    document.getElementById(
+      "upgradeList"
+    );
+
+
+  const upgrades = [
+
+    [
+      "speed",
+      "Engine",
+      120
+    ],
+
+    [
+      "handling",
+      "Handling",
+      150
+    ]
+
+  ];
+
+
+  list.innerHTML =
+    upgrades.map(
+      upgrade => {
+
+        const type =
+          upgrade[0];
+
+        const name =
+          upgrade[1];
+
+        const cost =
+          upgrade[2];
+
+        const level =
+          state.up[type];
+
+
+        return `
+
+          <div class="card">
+
+            <h3>
+              ${name}
+            </h3>
+
+            <div class="stat">
+
+              <span>
+                Level ${level}/5
+              </span>
+
+              <span>
+                ${
+                  level < 5
+                    ? cost + " 🪙"
+                    : "MAX"
+                }
+              </span>
+
+            </div>
+
+            <div class="bar">
+
+              <i
+                style="
+                  width:${level * 20}%
+                ">
+              </i>
+
+            </div>
+
+            <br>
+
+            <button
+              onclick="
+                upgrade(
+                  '${type}',
+                  ${cost}
+                )
+              ">
+
+              ${
+                level < 5
+                  ? "UPGRADE"
+                  : "MAXED"
+              }
+
+            </button>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* UPGRADE */
+
+window.upgrade =
+  function(type, cost) {
+
+    if (
+      state.up[type] < 5 &&
+      state.coins >= cost
+    ) {
+
+      state.coins -=
+        cost;
+
+      state.up[type]++;
+
+      save();
+
+      render();
+
+    }
+
+  };
+
+
+/* RENDER */
+
+function render() {
+
+  save();
+
+  renderCars();
+
+  renderLevels();
+
+  renderUpgrades();
+
+}
+
+
+/* START GAME */
+
+resetCar();
+
+render();
+
+requestAnimationFrame(
+  update
+);
+
+</script>
+
+</body>
+  </html>
